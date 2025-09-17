@@ -1,0 +1,3 @@
+/bins/*.o
+/iso/boot/kernel.*
+*.iso
