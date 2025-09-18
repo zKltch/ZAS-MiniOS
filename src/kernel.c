@@ -2,11 +2,12 @@
 
 void kmain(void *multiboot_info) {
 
-    puts("Auron is gay");
+    //puts("p23 is gay");
+    puts("abc");
 
     // stop the kernel
     while (1) {
-    __asm__("jmp ."); // Jump to the current instruction
+    __asm__("jmp .");
     }
 }
 

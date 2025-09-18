@@ -16,7 +16,7 @@ void putc(uint8_t c,uint8_t color,uint16_t index)
 void puts(const char *s)
 {
     uint16_t string_index=1;
-    uint8_t vga_offset=2;
+    uint16_t vga_offset=2;
 
     while (s[string_index]!= '\0')
     {
