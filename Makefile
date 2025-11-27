@@ -1,56 +1,40 @@
-# compile and tools
-CC = x86_64-elf-gcc
-AS = nasm  
-LD = x86_64-elf-ld
+CC = clang
+LD = ld.lld
+AS = nasm
 
-# compile parameters
-# -ffreestanding: raw machine
-# -fno-pie: disable randomize address
-CFLAGS = -Wall -Wextra -std=c11 -ffreestanding -fno-pie -fno-stack-protector -I. -g
-ASFLAGS = -f elf64
-
-# project file
+KERNEL_BIN = iso/boot/kernel.bin
+ISO_FILE = myos.iso
 SRCS_C = $(wildcard src/*.c)
 SRCS_S = $(wildcard src/*.s)
-OBJS   = $(patsubst src/%.c, bins/%.o, $(SRCS_C)) \
-          $(patsubst src/%.s, bins/%.o, $(SRCS_S))
-KERNEL = iso/boot/kernel.bin
-ISO = ZAS-MiniOS.iso
+OBJS = $(patsubst src/%.c, bins/%.o, $(SRCS_C)) \
+       $(patsubst src/%.s, bins/%.o, $(SRCS_S))
 
-.PHONY: all run clean
+CFLAGS = --target=x86_64-unknown-none-elf \
+         -ffreestanding \
+         -mno-red-zone \
+         -mcmodel=large \
+         -Wall -g -O2
 
-# rules
-all: $(ISO)
+LDFLAGS = -T src/linker.ld -static -nostdlib
 
-run: $(ISO)
-	qemu-system-x86_64 \
-    -cdrom ZAS-MiniOS.iso \
-    -m 256M \
-    -boot d \
+all: $(ISO_FILE)
 
-debug: $(iso)
-	qemu-system-x86_64 \
-    -cdrom ZAS-MiniOS.iso \
-    -m 256M \
-    -boot d \
-    -s \
-    -S
+run: $(ISO_FILE)
+	qemu-system-x86_64 -cdrom $(ISO_FILE) -m 256M -boot d
 
-$(ISO): $(KERNEL) iso/boot/grub/grub.cfg
-	grub-mkrescue -o $(ISO) iso
+$(KERNEL_BIN): $(OBJS) src/linker.ld
+	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(OBJS)
 
-$(KERNEL): $(OBJS) src/linker.ld
-	@echo "linking"
-	@echo $(OBJS)
-	$(CC) -T src/linker.ld -o $(KERNEL) $(OBJS) -ffreestanding -O2 -nostdlib -lgcc
-
-# compile rule
 bins/%.o: src/%.c
+	@mkdir -p bins
 	$(CC) $(CFLAGS) -c $< -o $@
 
 bins/%.o: src/%.s
-	$(AS) $(ASFLAGS) $< -o $@
+	@mkdir -p bins
+	nasm -f elf64 $< -o $@
 
-# clean rule
+$(ISO_FILE): $(KERNEL_BIN) iso/boot/grub/grub.cfg
+	grub-mkrescue -o $(ISO_FILE) iso
+
 clean:
-	rm -rf $(OBJS) $(KERNEL) $(ISO)
+	rm -rf bins $(KERNEL_BIN) $(ISO_FILE)
