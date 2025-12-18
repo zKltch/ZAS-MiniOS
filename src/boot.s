@@ -70,7 +70,7 @@ bits 64
 extern kmain
 
 long_mode_start:
-    mov ax, 0
+    mov ax, gdt64.data_segment
     mov ss, ax
     mov ds, ax
     mov es, ax
@@ -101,9 +101,13 @@ stack_top:
 
 section .rodata
 gdt64:
-    dq 0
+    dq 0                                            ; null entry
 .code_segment: equ $ - gdt64
-    dq (1 << 43) | (1 << 44) | (1 << 47) | (1 << 53)
+    dq (1 << 43) | (1 << 44) | (1 << 47) | (1 << 53)  ; code (executable, present, long mode)
+.data_segment: equ $ - gdt64
+    dq (1 << 41) | (1 << 44) | (1 << 47)           ; data (writable, present)
 .pointer:
     dw $ - gdt64 - 1
     dq gdt64
+
+
