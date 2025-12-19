@@ -38,3 +38,6 @@ $(ISO_FILE): $(KERNEL_BIN) iso/boot/grub/grub.cfg
 
 clean:
 	rm -rf bins $(KERNEL_BIN) $(ISO_FILE)
+
+debug:
+	qemu-system-x86_64 -cdrom $(ISO_FILE) -m 256M -boot d -gdb tcp::1234 -S
