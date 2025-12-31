@@ -12,8 +12,12 @@ OBJS = $(patsubst src/%.c, bins/%.o, $(SRCS_C)) \
 CFLAGS = --target=x86_64-unknown-none-elf \
          -ffreestanding \
          -mno-red-zone \
+				 -mno-mmx \
+         -mno-sse \
+         -mno-sse2 \
          -mcmodel=large \
          -Wall -g -O2
+
 
 LDFLAGS = -T src/linker.ld -static -nostdlib
 
