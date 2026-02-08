@@ -2,9 +2,12 @@
 #include "kalloc.h"
 #include "kpanic.h"
 #include "puts.h"
-#include "spinlock.h"
+#include "vmm.h"
+#include <stdint.h>
 
-extern uint64_t kernel_image_end;
+extern char rodata_end[];
+extern char text_start[];
+extern char bss_end[];
 
 void isr_handler(void) {
   puts("ISR Handler Called!\n");
@@ -12,20 +15,18 @@ void isr_handler(void) {
 }
 
 void kmain(void *multiboot_info) {
-  puts("Before interrupt\n");
-  init_idt();
+
   kmem_init((char *)PHYTOP, (char *)PHYEND);
+  kvminit();
+  init_idt();
 
-  puts("you r gay\n");
-
-  __asm__ volatile("int $0");
-  puts("im gay\n");
-
-  clear();
-
-  puts("hello again\n");
-
-  kpanic("GAY");
+  puts("meow\n");
+  puts_hex(BASE((uint64_t)text_start));
+  puts("\n");
+  puts_hex(((uint64_t)rodata_end));
+  puts("\n");
+  puts_hex(BASE((uint64_t)bss_end));
+  //__asm__ volatile("int $0");
 
   while (1) {
     hlt();

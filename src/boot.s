@@ -46,9 +46,18 @@ setup_page_tables:
     or eax, 0b11
     mov [p3_table], eax
 
-    mov eax, 0x0
+    mov ecx, 0
+
+.map_p2_loop:
+    mov eax, 0x200000
+    mul ecx             ; eax = 0x200000 * ecx
+
     or eax, 0b10000011
-    mov [p2_table], eax
+    mov [p2_table + ecx * 8], eax
+
+    inc ecx 
+    cmp ecx, 128        ; 2M*128=256M
+    jne .map_p2_loop
     ret
 
 enable_paging:

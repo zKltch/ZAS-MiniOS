@@ -59,3 +59,10 @@ void clear(void) {
 
   StringAddress = 0;
 }
+
+void memset(void *dest, uint8_t content, unsigned long size) {
+  uint8_t *set = (uint8_t *)dest;
+
+  for (unsigned long i = 0; i < size; i++)
+    set[i] = content;
+}

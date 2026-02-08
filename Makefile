@@ -15,7 +15,7 @@ CFLAGS = --target=x86_64-unknown-none-elf \
 				 -mno-mmx \
          -mno-sse \
          -mno-sse2 \
-         -mcmodel=large \
+         -mcmodel=kernel \
          -Wall -g -O2
 
 

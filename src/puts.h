@@ -8,6 +8,7 @@
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 
+void memset(void *dest, uint8_t content, unsigned long size);
 void putc(uint8_t c, uint8_t color);
 void puts(const char *s);
 void puts_hex(uint64_t value);

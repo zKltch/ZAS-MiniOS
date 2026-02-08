@@ -1,6 +1,5 @@
 #include "kalloc.h"
 #include "kpanic.h"
-#include "spinlock.h"
 #include <stdint.h>
 
 struct free_node {
@@ -13,6 +12,8 @@ struct {
 
 // from kmem end to begin init
 void kmem_init(char *begin, char *end) {
+  kmem.freelist = (struct free_node *)0;
+  end -= PGSIZE;
   char *p = end;
   for (; begin <= p; p = p - PGSIZE) {
     kfree(p);
@@ -34,10 +35,13 @@ void kfree(char *p) {
 }
 
 char *kalloc(void) {
-
   struct free_node *alloc_chunk;
 
   alloc_chunk = kmem.freelist;
+
+  if (alloc_chunk == (struct free_node *)0)
+    kpanic("kalloc out of memory");
+
   kmem.freelist = alloc_chunk->next;
 
   return (char *)alloc_chunk;
