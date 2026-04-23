@@ -32,4 +32,8 @@ static inline void lcr3(uintptr_t *val) {
   asm volatile("mov %0,%%cr3" : : "r"(val));
 }
 
+uint64_t create_process_pml4(void);
+
+void free_process_pml4(pte_t cr3);
+
 #endif
