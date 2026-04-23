@@ -89,3 +89,18 @@ void kvminit() {
 }
 
 void switch_cr3(uintptr_t *pdbr) { lcr3(pdbr); }
+
+uint64_t create_process_pml4() {
+  uintptr_t *process_pml4 = (uintptr_t *)kalloc();
+  memset(process_pml4, 0, PGSIZE);
+
+  for (int i = 0; i < sizeof(kmap) / sizeof(struct kmap); i++) {
+    process_pml4[i] = KERNEL_PDBR[i];
+  }
+
+  return (uint64_t)process_pml4;
+}
+
+void free_process_pml4(pte_t cr3) {
+  kfree((char *)cr3);
+}
