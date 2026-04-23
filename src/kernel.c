@@ -3,6 +3,8 @@
 #include "kpanic.h"
 #include "puts.h"
 #include "vmm.h"
+#include "schedule.h"
+#include "task_handler.h"
 #include <stdint.h>
 
 extern char rodata_end[];
@@ -27,6 +29,10 @@ void kmain(void *multiboot_info) {
   puts("\n");
   puts_hex(BASE((uint64_t)bss_end));
   //__asm__ volatile("int $0");
+
+  struct task *task_handler = InitTask((void *)handler, 0x1000);
+  struct task *task_test = InitTask((void *)test, 0x1000);
+  schedule();
 
   while (1) {
     hlt();
