@@ -8,6 +8,7 @@ void handler() {
 
 void test() {
   puts("\n");
-  puts("test");
-  while(1);
+  puts("test\n");
+  while (1)
+    ;
 }

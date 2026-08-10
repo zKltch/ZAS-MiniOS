@@ -1,10 +1,11 @@
 #include "idt.h"
 #include "kalloc.h"
 #include "kpanic.h"
+#include "pic.h"
 #include "puts.h"
-#include "vmm.h"
 #include "schedule.h"
 #include "task_handler.h"
+#include "vmm.h"
 #include <stdint.h>
 
 extern char rodata_end[];
@@ -21,6 +22,8 @@ void kmain(void *multiboot_info) {
   kmem_init((char *)PHYTOP, (char *)PHYEND);
   kvminit();
   init_idt();
+  PIC_remap(PIC1_OFFSET, PIC2_OFFSET);
+  sti();
 
   puts("meow\n");
   puts_hex(BASE((uint64_t)text_start));
