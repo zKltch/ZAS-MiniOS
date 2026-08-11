@@ -1,6 +1,6 @@
 #include "keyboard.h"
+#include "console.h"
 #include "pic.h"
-#include "puts.h"
 #include <stdint.h>
 
 static const char keymap[128] = {
@@ -45,8 +45,10 @@ static const char keymap_shift[128] = {
 #define right_shift 0x36
 #define press 0x7f
 #define release 0x80
-#define keymap_index(scancode) scancode &press
-uint8_t shift = 0;
+
+#define keymap_index(scancode) (scancode & press)
+volatile uint8_t shift = 0;
+extern ring_buffer_t ring_buffer;
 
 void keyboard_handler() {
   uint8_t scancode = inb(0x60);
@@ -62,11 +64,15 @@ void keyboard_handler() {
 
   if (shift) {
 
-    putc(keymap_shift[keymap_index(scancode)], 0xf);
+    ring_buffer.buffer[ring_buffer.head & ring_buffer_boundary] =
+        keymap_shift[keymap_index(scancode)];
+    ring_buffer.head++;
     goto ret;
   }
 
-  putc(keymap[keymap_index(scancode)], 0xf);
+  ring_buffer.buffer[ring_buffer.head & ring_buffer_boundary] =
+      keymap[keymap_index(scancode)];
+  ring_buffer.head++;
 ret:
   PIC_sendEOI((uint8_t)1);
 }

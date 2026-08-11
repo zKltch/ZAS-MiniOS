@@ -13,5 +13,8 @@ void putc(uint8_t c, uint8_t color);
 void puts(const char *s);
 void puts_hex(uint64_t value);
 void clear(void);
+void backspace();
+void memcpy(void *dest, void *src, unsigned long size);
+int memcmp(void *dest, void *src, unsigned long size);
 
 #endif

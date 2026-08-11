@@ -2,7 +2,7 @@
 
 void handler() {
   puts("\n");
-  puts("schedule!!!");
+  puts("schedule!!!\n");
   schedule();
 }
 

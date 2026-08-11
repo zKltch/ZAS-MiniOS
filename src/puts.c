@@ -1,5 +1,7 @@
 #include "puts.h"
+#include "vmm.h"
 #include <stdint.h>
+#include <sys/types.h>
 
 static uint16_t StringAddress = 0;
 
@@ -16,6 +18,18 @@ void putc(uint8_t c, uint8_t color) {
     *vga_ptr = color;
     *StringAddressPtr = *StringAddressPtr + 2;
   }
+}
+
+void backspace() {
+
+  volatile uint8_t *vga_ptr = (uint8_t *)VGA_ADDRESS;
+  volatile uint16_t *StringAddressPtr = &StringAddress;
+
+  vga_ptr = vga_ptr + *StringAddressPtr;
+  *vga_ptr = ' ';
+  vga_ptr++;
+  *vga_ptr = 0x07;
+  *StringAddressPtr = *StringAddressPtr - 2;
 }
 
 void puts(const char *s) {
@@ -65,4 +79,23 @@ void memset(void *dest, uint8_t content, unsigned long size) {
 
   for (unsigned long i = 0; i < size; i++)
     set[i] = content;
+}
+
+void memcpy(void *dest, void *src, unsigned long size) {
+  uint8_t *set = (uint8_t *)dest;
+  uint8_t *src_set = (uint8_t *)src;
+
+  for (unsigned long i = 0; i < size; i++)
+    set[i] = src_set[i];
+}
+
+int memcmp(void *dest, void *src, unsigned long size) {
+  uint8_t *set = (uint8_t *)dest;
+  uint8_t *src_set = (uint8_t *)src;
+
+  for (unsigned long i = 0; i < size; i++)
+    if (set[i] != src_set[i]) {
+      return 1;
+    }
+  return 0;
 }
