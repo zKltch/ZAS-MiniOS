@@ -3,6 +3,7 @@
 #include "kalloc.h"
 #include "kpanic.h"
 #include "pic.h"
+#include "pit.h"
 #include "puts.h"
 #include "schedule.h"
 #include "task_handler.h"
@@ -24,6 +25,8 @@ void kmain(void *multiboot_info) {
   kvminit();
   init_idt();
   PIC_remap(PIC1_OFFSET, PIC2_OFFSET);
+  IRQ_clear_mask(0);
+  pit_init(100);
   sti();
 
   puts("meow\n");

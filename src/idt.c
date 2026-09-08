@@ -6,6 +6,7 @@ struct idt_ptr_struct idt_ptr;
 
 extern void isr_stub();
 extern void keyboard_stub();
+extern void PitTimer_stub();
 extern void spurious_stub();
 
 static void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel,
@@ -34,6 +35,7 @@ void init_idt(void) {
 
   idt_set_gate(0, (uint64_t)isr_stub, 0x08, 0x8E);
   idt_set_gate(0x21, (uint64_t)keyboard_stub, 0x08, 0x8E);
+  idt_set_gate(0x20, (uint64_t)PitTimer_stub, 0x08, 0x8E);
   idt_set_gate(0x27, (uint64_t)spurious_stub, 0x08, 0x8E);
 
   __asm__ volatile("lidt %0" : : "m"(idt_ptr));

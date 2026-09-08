@@ -32,6 +32,7 @@ extern %2
 ; stub name and their handler
 STUB isr_stub, isr_handler      ; stub name, C handler
 STUB keyboard_stub, keyboard_handler      ; 
+STUB PitTimer_stub, PitTimer_handler
 
 global spurious_stub
 spurious_stub:
