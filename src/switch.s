@@ -2,11 +2,38 @@
 global switch_context
 global task_entrance
 
-
 ; void switch_context(struct task *previous, struct task *next)
 switch_context:
-	;Due to useing function to schedule, it dont need to save all of register
-	;the  sort of this register is follow task structure
+	push rax
+	push rdx
+	add rsp, 0x10
+	pop rax		;RIP
+	mov rdx, rsp
+	sub rsp, 0x18
+
+	;user space need to change
+	push qword 0x10		;SS
+	push rdx		;RSP
+	pushfq
+	or qword [rsp], 0x200	;ENABLE IF
+	cli
+	push qword 0x8		;CS
+	push rax
+	
+	add rsp, 0x28
+	pop rdx
+	pop rax
+	sub rsp, 0x38
+
+	push rax
+	push rcx
+	push rdx
+	push rsi
+	push rdi
+	push r8
+	push r9
+	push r10
+	push r11
 	push rbx
 	push rbp
 	push r12
@@ -31,12 +58,24 @@ switch_context:
 	pop r12
 	pop rbp
 	pop rbx
-
+	pop r11
+	pop r10
+	pop r9
+	pop r8
+	pop rdi
+	pop rsi
+	pop rdx
+	pop rcx
+	pop rax
+	sti
 	ret
 
 ;void task_entrance(struce task *firstTask)
 task_entrance:
 	mov rsp, [rdi]
+
+        mov rax, [rdi + 16]
+        mov cr3, rax
 
 	pop r15
 	pop r14
@@ -44,5 +83,22 @@ task_entrance:
 	pop r12
 	pop rbp
 	pop rbx
-
+	pop r11
+	pop r10
+	pop r9
+	pop r8
+	pop rdi
+	pop rsi
+	pop rdx
+	pop rcx
+	pop rax
+	sti
 	ret
+
+
+
+
+
+
+
+

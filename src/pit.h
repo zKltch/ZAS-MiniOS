@@ -2,6 +2,7 @@
 #define PIT_H
 #include <stdint.h>
 #include "pic.h"
+#include "schedule.h"
 
 #define PIT_CHANNEL0  0x40
 #define PIT_COMMAND   0x43

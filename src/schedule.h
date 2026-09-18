@@ -2,6 +2,7 @@
 #define SCHEDULE_H
 #include <stdint.h>
 #include "vmm.h"
+#include "idt.h"
 
 #define max_pid 64
 #define NULL (void *)0
@@ -10,7 +11,7 @@ struct task {
   uint64_t *kernel_rsp;
   uint64_t pid;
   pte_t cr3;
-  enum { NEW, READY, RUNNING, WAITING, TERMINATED } state;
+  enum __TASK_STATE : uint64_t{ NEW, READY, RUNNING, WAITING, TERMINATED } state;
   void *stack;
   uint64_t stack_size;
   struct task *next_task;
@@ -31,6 +32,8 @@ void destroy_task(struct task *task);
 extern struct task *schedule_list;
 extern struct task *current;
 
+extern uint64_t FirstEnterTask;
+
 void append_schedule_list(struct task *task);
 
 extern void task_entrance(struct task *firstTask);
@@ -39,5 +42,7 @@ extern void switch_context(struct task *previous, struct task *next);
 
 struct task *InitTask(void (*entry)(), uint64_t stack_size);
 
-void schedule();
+void __schedule(char IsTimer);
+#define schedule() __schedule(0)
+#define schedule_timer() __schedule(1)
 #endif

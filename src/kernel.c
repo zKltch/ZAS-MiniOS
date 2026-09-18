@@ -40,4 +40,5 @@ void kmain(void *multiboot_info) {
   struct task *task_handler = InitTask((void *)handler, 0x1000);
   struct task *task_test = InitTask((void *)console_handler, 0x1000);
   schedule();
+  hlt();
 }

@@ -22,4 +22,6 @@ void PitTimer_handler(void)
     timer_test++;
 
     PIC_sendEOI((uint8_t)0);
+
+    schedule_timer();
 }
