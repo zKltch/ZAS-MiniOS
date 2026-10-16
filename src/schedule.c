@@ -1,7 +1,7 @@
 #include "schedule.h"
+#include "idt.h"
 #include "kalloc.h"
 #include "puts.h"
-#include "idt.h"
 
 uint64_t pid_bitmap = 0xFFFF;
 extern uintptr_t *KERNEL_PDBR;
@@ -38,36 +38,36 @@ struct task *create_task(void (*entry)(), uint64_t stack_size) {
 
   uint64_t *stack =
       (uint64_t *)((uint8_t *)new_task->stack + new_task->stack_size);
-  
+
   uint64_t *stack_top = stack;
-  *(--stack) = 0x10;                     //SS(user space need to change)
-  *(--stack) = (uint64_t)stack_top;      //RSP
-  *(--stack) = 0x202;                    //RFLAGS(IF | bit1_reserved)
-  *(--stack) = 0x8;                      //CS(user space need to change)
-  *(--stack) = (uint64_t)entry;          //RIP(IDT)
+  *(--stack) = 0x10;                // SS(user space need to change)
+  *(--stack) = (uint64_t)stack_top; // RSP
+  *(--stack) = 0x202;               // RFLAGS(IF | bit1_reserved)
+  *(--stack) = 0x8;                 // CS(user space need to change)
+  *(--stack) = (uint64_t)entry;     // RIP(IDT)
   // follow stub.s
-  *(--stack) = 0;                        // RAX
-  *(--stack) = 0;                        // RCX
-  *(--stack) = 0;                        // RDX
-  *(--stack) = 0;                        // RSI
-  *(--stack) = 0;                        // RDI
-  *(--stack) = 0;                        // R8
-  *(--stack) = 0;                        // R9
-  *(--stack) = 0;                        // R10
-  *(--stack) = 0;                        // R11
+  *(--stack) = 0; // RAX
+  *(--stack) = 0; // RCX
+  *(--stack) = 0; // RDX
+  *(--stack) = 0; // RSI
+  *(--stack) = 0; // RDI
+  *(--stack) = 0; // R8
+  *(--stack) = 0; // R9
+  *(--stack) = 0; // R10
+  *(--stack) = 0; // R11
   // follow switch.s
   //*(--stack) = (uint64_t)entry;          // RIP(switch)
-  *(--stack) = 0;                        // RBX
-  *(--stack) = 0;                        // RBP
-  *(--stack) = 0;                        // R12
-  *(--stack) = 0;                        // R13
-  *(--stack) = 0;                        // R14
-  *(--stack) = 0;                        // R15
+  *(--stack) = 0; // RBX
+  *(--stack) = 0; // RBP
+  *(--stack) = 0; // R12
+  *(--stack) = 0; // R13
+  *(--stack) = 0; // R14
+  *(--stack) = 0; // R15
 
   new_task->kernel_rsp = stack;
   // new_task->cr3 = create_process_pml4(); uncomment after start making
   // userspace
-  new_task->cr3 = (pte_t)KERNEL_PDBR; // KERNEL space only
+  new_task->cr3 = (pte_t)v2p(KERNEL_PDBR); // KERNEL SPACE ONLY
 
   new_task->state = NEW;
 
@@ -124,10 +124,10 @@ void __schedule(char IsTimer) {
   if (schedule_list == NULL)
     return;
   if (!IsTimer)
-    cli(); 
+    cli();
   if (FirstEnterTask) {
     current->state = RUNNING;
-    if(!IsTimer) {
+    if (!IsTimer) {
       FirstEnterTask = 0;
       task_entrance(current);
     }
@@ -143,7 +143,7 @@ void __schedule(char IsTimer) {
     current->state = RUNNING;
     struct task *next = current;
 
-    if(!IsTimer){
+    if (!IsTimer) {
       switch_context(prev, next);
     }
   }

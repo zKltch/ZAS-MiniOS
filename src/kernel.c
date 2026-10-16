@@ -21,7 +21,7 @@ void isr_handler(void) {
 
 void kmain(void *multiboot_info) {
 
-  kmem_init((char *)PHYTOP, (char *)PHYEND);
+  kmem_init((char *)p2v(PHYTOP), (char *)p2v(PHYEND));
   kvminit();
   init_idt();
   PIC_remap(PIC1_OFFSET, PIC2_OFFSET);
