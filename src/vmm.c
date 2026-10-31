@@ -74,6 +74,21 @@ int map_page(pte_t *pml4, uint64_t va, uint64_t pa_begin, uint64_t pa_end,
   return 1;
 }
 
+void *map_mmio(uint64_t pa, uint64_t size)
+{
+  uint64_t va = p2v(pa);
+  uint64_t pa_start = pa & ~(PGSIZE - 1);
+  uint64_t pa_end = (pa + size + PGSIZE - 1) & ~(PGSIZE - 1);
+
+  for(uint64_t pa = pa_start; pa < pa_end; pa += PGSIZE)
+  {
+    map_page(KERNEL_PDBR, p2v(pa), pa, pa + PGSIZE,
+	     PTE_P | PTE_W | PTE_PCD | PTE_PWT);
+  }
+  switch_cr3((uintptr_t *)v2p(KERNEL_PDBR));
+  return (void *)va;
+}
+
 void kvminit() {
 
   KERNEL_PDBR = (uintptr_t *)kalloc();

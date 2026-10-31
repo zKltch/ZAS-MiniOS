@@ -6,6 +6,8 @@ typedef uintptr_t pte_t;
 #define PTE_P 1 // present
 #define PTE_W 2 // write
 #define PTE_U 4 // usermode
+#define PTE_PWT 8 // write-through
+#define PTE_PCD 16 //cache disable
 // pm_level 4 3 2 1
 // 39 30 21 12
 //  & 0x1ff (9 bits)
@@ -26,6 +28,7 @@ void switch_cr3(uintptr_t *pdbr);
 pte_t *walk(pte_t *pml4, uint64_t va, int alloc);
 int map_page(pte_t *pml4, uint64_t va, uint64_t pa_begin, uint64_t pa_end,
              int perm);
+void *map_mmio(uint64_t pa_begin, uint64_t pa_end);
 void kvminit();
 
 static inline void lcr3(uintptr_t *val) {

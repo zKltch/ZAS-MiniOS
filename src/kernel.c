@@ -8,6 +8,7 @@
 #include "schedule.h"
 #include "task_handler.h"
 #include "vmm.h"
+#include "pci.h"
 #include <stdint.h>
 
 extern char rodata_end[];
@@ -27,6 +28,10 @@ void kmain(void *multiboot_info) {
   PIC_remap(PIC1_OFFSET, PIC2_OFFSET);
   IRQ_clear_mask(0);
   pit_init(100);
+
+  PCI_DEVICE device = { 0 };
+  PciScanNvme(&device);
+
   sti();
 
   puts("meow\n");

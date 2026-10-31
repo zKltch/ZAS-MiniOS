@@ -3,7 +3,7 @@
 #include "puts.h"
 #include "idt.h"
 
-uint64_t pid_bitmap = 0xFFFF;
+uint64_t pid_bitmap = ~0ULL;
 extern uintptr_t *KERNEL_PDBR;
 struct task *schedule_list = NULL;
 
@@ -13,8 +13,8 @@ uint64_t FirstEnterTask = 1;
 
 uint64_t alloc_pid() {
   for (uint64_t pid = 1; pid <= max_pid; pid++) {
-    if (pid_bitmap & (1ULL << pid)) {
-      pid_bitmap ^= (1ULL << pid);
+    if (pid_bitmap & (1ULL << (pid - 1))) {
+      pid_bitmap ^= (1ULL << (pid - 1));
       return pid;
     }
   }
