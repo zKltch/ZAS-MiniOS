@@ -1,5 +1,6 @@
 /bins/*.o
 /iso/boot/kernel.*
 *.iso
+*.raw
 .gdb_history
 .vscode
