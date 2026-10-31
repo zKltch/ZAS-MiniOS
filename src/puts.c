@@ -1,7 +1,5 @@
 #include "puts.h"
-#include "vmm.h"
 #include <stdint.h>
-#include <sys/types.h>
 
 static uint16_t StringAddress = 0;
 

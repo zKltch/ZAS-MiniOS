@@ -1,10 +1,11 @@
 #ifndef PUTS_H
 #define PUTS_H
 
+#include "vmm.h"
 #include <stdint.h>
 
-#define VGA_ADDRESS 0xB8000
-#define VGA_ADDRESS_END 0xB8000 + 4000
+#define VGA_ADDRESS p2v(0xB8000)
+#define VGA_ADDRESS_END (VGA_ADDRESS + 4000)
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 

@@ -15,8 +15,8 @@ extern char bss_end[];
 // ----------- unused ram
 // high address
 // PHYTOP begin after bss
-#define PHYTOP (uint64_t)bss_end  // low address
-#define PHYEND 0x0000000010000000 // high address 256M
+#define PHYTOP (uint64_t)v2p(bss_end) // low address
+#define PHYEND 0x0000000010000000     // high address 256M
 
 void kmem_init(char *begin, char *end);
 char *kalloc(void);

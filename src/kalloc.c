@@ -1,5 +1,6 @@
 #include "kalloc.h"
 #include "kpanic.h"
+#include "vmm.h"
 #include <stdint.h>
 
 struct free_node {
@@ -23,8 +24,7 @@ void kmem_init(char *begin, char *end) {
 void kfree(char *p) {
   struct free_node *run;
 
-  if ((uintptr_t)p % PGSIZE != 0 || (uintptr_t)p > PHYEND ||
-      (uintptr_t)p < PHYTOP) {
+  if ((uintptr_t)p % PGSIZE != 0 || v2p(p) > PHYEND || v2p(p) < PHYTOP) {
     kpanic("kfree");
   }
 
