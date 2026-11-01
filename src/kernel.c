@@ -8,7 +8,7 @@
 #include "schedule.h"
 #include "task_handler.h"
 #include "vmm.h"
-#include "pci.h"
+#include "nvme.h"
 #include <stdint.h>
 
 extern char rodata_end[];
@@ -31,6 +31,10 @@ void kmain(void *multiboot_info) {
 
   PCI_DEVICE device = { 0 };
   PciScanNvme(&device);
+  NvmeInit(device.BAR0);
+  NvmeIdentifyTest();
+  NvmeInitIoQueues();
+  NvmeReadWriteTest();
 
   sti();
 

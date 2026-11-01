@@ -112,8 +112,6 @@ typedef union _BA_REGISTER
   IO_SPACE_BAR IO_BAR;
 }BA_REGISTER, *PBA_REGISTER;
 
-#pragma pack(pop)
-
 typedef union _HEADER_FIELD
 {
   struct
@@ -284,6 +282,7 @@ typedef struct _PCI_DEVICE
   uint64_t BAR0;
   uint32_t BAR0_SIZE;
 }PCI_DEVICE, *PPCI_DEVICE;
+#pragma pack(pop)
 
 static inline void outl(uint16_t port, uint32_t value)
 {
@@ -300,7 +299,6 @@ static inline uint32_t inl(uint16_t port)
 uint32_t PciConfigRead_DWORD(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset);
 void PciConfigWrite_DWORD(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t val);
 void PciEnableFeatures(uint8_t bus, uint8_t dev, uint8_t func);
-uint64_t PciGetBAR(uint8_t bus, uint8_t dev, uint8_t func);
-uint8_t PciScanNvme(PPCI_DEVICE device);
+uint64_t PciGetBAR0(uint8_t bus, uint8_t dev, uint8_t func);
 
 #endif

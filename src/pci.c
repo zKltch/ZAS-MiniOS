@@ -1,5 +1,4 @@
 #include "pci.h"
-#include "puts.h"
 
 // All the magic number is the offset of the struct
 // The offset of the struct is controlled by Register_Offset
@@ -45,7 +44,7 @@ void PciEnableFeatures(uint8_t bus, uint8_t dev, uint8_t func)
   return;
 }
 
-uint64_t PciGetBAR(uint8_t bus, uint8_t dev, uint8_t func)
+uint64_t PciGetBAR0(uint8_t bus, uint8_t dev, uint8_t func)
 {
   HEADER_FIELD BAR0_field = { 0 };
   BAR0_field.Value = PciConfigRead_DWORD(bus, dev, func, 0x10);
@@ -57,51 +56,4 @@ uint64_t PciGetBAR(uint8_t bus, uint8_t dev, uint8_t func)
     return ((uint64_t)BAR1_field.Value << 32) | (BAR0_field.Value & ~0xFULL);
   }
   return (uint64_t)(BAR0_field.Value & ~0xFULL);
-}
-
-uint8_t PciScanNvme(PPCI_DEVICE device)
-{
-  //enumerate
-  for(uint16_t bus = 0; bus < 256; bus++)
-  {
-    for(uint8_t dev = 0; dev < 32; dev++)
-    {
-      for(uint8_t func = 0; func < 8; func++)
-      {
-        HEADER_FIELD ID = { 0 };
-	ID.Value = PciConfigRead_DWORD(bus, dev, func, 0x0);
-	if(ID.VendorID == 0xFFFF)
-	{
-	  if(func == 0) break;
-	  continue;
-	}
-
-        HEADER_FIELD DeviceType = { 0 };
-	DeviceType.Value = PciConfigRead_DWORD(bus, dev, func, 0x08);
-	if(DeviceType.ClassCode == 0x1 && DeviceType.SubClass == 0x8 && DeviceType.ProgIF == 0x2)
-	{
-	  device->Bus = bus;
-	  device->Device = dev;
-	  device->Function = func;
-	  device->VendorID = ID.VendorID;
-	  device->DeviceID = ID.DeviceID;
-	  device->ClassCode = DeviceType.ClassCode;
-	  device->SubClass = DeviceType.SubClass;
-	  device->ProgIF = DeviceType.ProgIF;
-	  device->BAR0 = PciGetBAR(bus, dev, func);
-
-	  PciEnableFeatures(bus, dev, func);
-
-	  puts("Find NVMe\n");
-	  puts("bus : ");puts_hex(bus);
-	  puts(", device : ");puts_hex(dev);
-	  puts(", function : ");puts_hex(func);
-	  puts(", BAR PA : ");puts_hex(device->BAR0);
-	  puts("\n");
-	  return 1;
-	}
-      }
-    }
-  }
-  return 0;
 }
