@@ -40,12 +40,12 @@ uint8_t PciScanNvme(PPCI_DEVICE device)
 
 	  PciEnableFeatures(bus, dev, func);
 
-	  puts("Find NVMe\n");
-	  puts("bus : ");puts_hex(bus);
-	  puts(", device : ");puts_hex(dev);
-	  puts(", function : ");puts_hex(func);
-	  puts(", BAR PA : ");puts_hex(device->BAR0);
-	  puts("\n");
+	  //puts("Find NVMe\n");
+	  //puts("bus : ");puts_hex(bus);
+	  //puts(", device : ");puts_hex(dev);
+	  //puts(", function : ");puts_hex(func);
+	  //puts(", BAR PA : ");puts_hex(device->BAR0);
+	  //puts("\n");
 	  return 0;
 	}
       }
@@ -116,7 +116,7 @@ uint8_t NvmeInit(uint64_t bar0_pa)
     __asm__ volatile("pause");
   }
 
-  puts("INFO : NVMe is ready\n");
+  //puts("INFO : NVMe is ready\n");
   return 0;
 }
 
@@ -238,7 +238,7 @@ uint8_t NvmeInitIoQueues(void)
     return 1;
   }
 
-  puts("INFO : IO Queue created successfully\n");
+  //puts("INFO : IO Queue created successfully\n");
   return 0;
 }
 

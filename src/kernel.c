@@ -9,6 +9,7 @@
 #include "task_handler.h"
 #include "vmm.h"
 #include "nvme.h"
+#include "fs.h"
 #include <stdint.h>
 
 extern char rodata_end[];
@@ -32,11 +33,13 @@ void kmain(void *multiboot_info) {
   PCI_DEVICE device = { 0 };
   PciScanNvme(&device);
   NvmeInit(device.BAR0);
-  NvmeIdentifyTest();
+  //NvmeIdentifyTest();
   NvmeInitIoQueues();
-  NvmeReadWriteTest();
+  //NvmeReadWriteTest();
 
   sti();
+
+  fs_test();
 
   puts("meow\n");
   // puts_hex(BASE((uint64_t)text_start));
