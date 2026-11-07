@@ -23,5 +23,6 @@ typedef struct {
 uint8_t buffer_getc(void);
 void buffer_readline(char *dst);
 void console_handler(void);
+void execute_command(char *cmd);
 
 #endif

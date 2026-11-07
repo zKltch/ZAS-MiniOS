@@ -1,4 +1,5 @@
 #include "console.h"
+#include "script_engine.h"
 #include "puts.h"
 #include <stdint.h>
 
@@ -44,15 +45,23 @@ void buffer_readline(char *dst) {
 
 void console_handler(void) {
   uint8_t c;
-  char echo[0x100];
+  char cmd[0x100];
 
   for (;;) {
 
-    puts("$ ");
-    buffer_readline(echo);
-    puts(echo);
-    if (!memcmp(echo, "clear", 5)) {
-      clear();
-    }
+    puts("$"); puts(path); puts("> ");
+    buffer_readline(cmd);
+    execute_command(cmd);
   }
+}
+
+void execute_command(char *cmd)
+{
+  if (!memcmp(cmd, "clear", 5)) clear();
+  if (!memcmp(cmd, "cat", 3)) cat_file(cmd + 3);
+  if (!memcmp(cmd, "echo", 4)) echo_write_file(cmd + 4);
+  if (!memcmp(cmd, "sh", 2)) cmd_script(cmd + 2);
+  if (!memcmp(cmd, "mkdir", 5)) create_dir(cmd + 5);
+  if (!memcmp(cmd, "cd", 2)) change_directory(cmd + 2);
+  if (!memcmp(cmd, "ls", 2)) cmd_ls();
 }

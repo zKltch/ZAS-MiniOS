@@ -4,6 +4,12 @@
 #include "vmm.h"
 #include <stdint.h>
 
+extern char path[0x100];
+extern char *path_ptr;
+extern uint8_t path_array[0x100];
+extern uint8_t path_step;
+extern uint32_t CurrentID;
+
 #define VGA_ADDRESS p2v(0xB8000)
 #define VGA_ADDRESS_END (VGA_ADDRESS + 4000)
 #define VGA_WIDTH 80

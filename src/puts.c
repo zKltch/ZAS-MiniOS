@@ -1,6 +1,11 @@
 #include "puts.h"
 #include <stdint.h>
 
+char path[0x100] = { 0 };
+char *path_ptr = path;
+uint8_t path_array[0x100] = { 0 };
+uint8_t path_step = 0;
+uint32_t CurrentID = 0; // it should be saved in task
 static uint16_t StringAddress = 0;
 
 void putc(uint8_t c, uint8_t color) {

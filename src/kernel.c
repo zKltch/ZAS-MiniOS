@@ -37,11 +37,13 @@ void kmain(void *multiboot_info) {
   NvmeInitIoQueues();
   //NvmeReadWriteTest();
 
+  fs_mount();
+
   sti();
 
-  fs_test();
+  // fs_test();
 
-  puts("meow\n");
+  // puts("meow\n");
   // puts_hex(BASE((uint64_t)text_start));
   // puts("\n");
   // puts_hex(((uint64_t)rodata_end));
@@ -49,7 +51,7 @@ void kmain(void *multiboot_info) {
   // puts_hex(BASE((uint64_t)bss_end));
   //__asm__ volatile("int $0");
 
-  struct task *task_handler = InitTask((void *)handler, 0x1000);
+  // struct task *task_handler = InitTask((void *)handler, 0x1000);
   struct task *task_test = InitTask((void *)console_handler, 0x1000);
   schedule();
   hlt();
