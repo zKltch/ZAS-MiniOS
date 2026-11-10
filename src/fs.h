@@ -72,6 +72,7 @@ typedef struct _DIRECTORY_TREE
 {
   uint32_t FileID;
   uint32_t ParentID;
+  uint32_t FileOffset;
 } DIRECTORY_TREE, *PDIRECTORY_TREE;
 #pragma pack(pop)
 
@@ -105,7 +106,7 @@ uint8_t fs_format(void);
 uint32_t fs_create_file(uint32_t DesiredCapacity, uint8_t perm);
 
 /*
- * @brief Write Data into File Use FileID
+ * @brief Write Data into File Use FileID(Data Is Continuously Appended)
  * @param FileID
  * @param Buffer Which You Want To Write
  * @param Size, The Data Size
@@ -113,6 +114,15 @@ uint32_t fs_create_file(uint32_t DesiredCapacity, uint8_t perm);
 */
 uint8_t fs_write_file(uint32_t FileID, const void *Buffer, uint32_t Size);
 
+/*
+ * @brief Overwrite Data At Specified File Offset Use FileID
+ * @param FileID
+ * @param Buffer Which You Want To Write
+ * @param Size, The Data Size
+ * @param Offset, Where You Want To Write
+ * @return success(0), fail(1)
+*/
+uint8_t fs_write_file_offset(uint32_t FileID, const void *Buffer, uint32_t Size, uint32_t Offset);
 
 /*
  * @brief Read Data from File Use FileID
@@ -145,6 +155,12 @@ char IsDirectory(uint32_t FileID);
 
 uint32_t GetParentID(uint32_t CurrentID);
 
-void list_line(void);
+void list_file(void);
+
+uint8_t IsDirectoryEmpty(uint32_t DirID);
+
+void fs_init_dir_single_file(uint32_t offset);
+
+void fs_invalidate_file_table(uint32_t FileID);
 
 #endif

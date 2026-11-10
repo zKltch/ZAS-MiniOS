@@ -160,6 +160,56 @@ uint8_t fs_write_file(uint32_t FileID, const void *Buffer, uint32_t Size)
   return 0;
 }
 
+uint8_t fs_write_file_offset(uint32_t FileID, const void *Buffer, uint32_t Size, uint32_t Offset)
+{
+  if(!FileID || FileID > FS_MAX_FILES || !Buffer || !Size) return 1;
+
+  uint32_t Index = FileID - 1;
+  if(!g_FileTable[Index].FileID || !g_FileTable[Index].State) return 1;
+
+  if(!g_FileTable[Index].UsedBlocks) return 1;
+
+  uint32_t TotalSize = (g_FileTable[Index].UsedBlocks - 1) * FS_BLOCK_SIZE + g_FileTable[Index].BytesOffset;
+  if(Offset + Size > TotalSize) return 1;
+
+  void *DMA_Buffer = kalloc();
+  char *Data_Buffer = (char*)Buffer;
+
+  uint32_t write_size = Size;
+  uint32_t current_offset = Offset;
+
+  while(write_size > 0)
+  {
+    uint32_t block_index = current_offset / FS_BLOCK_SIZE;
+    uint32_t block_offset = current_offset % FS_BLOCK_SIZE;
+    uint32_t current_lba = g_FileTable[Index].StartLBA + block_index;
+
+    memset(DMA_Buffer, 0, PGSIZE);
+    if(NvmeRead(current_lba, 1, v2p(DMA_Buffer)))
+    {
+      kfree((char*)DMA_Buffer);
+      return 1;
+    }
+
+    uint32_t write_bytes = (write_size > FS_BLOCK_SIZE - block_offset) ? FS_BLOCK_SIZE - block_offset : write_size;
+
+    memcpy((char*)DMA_Buffer + block_offset, Data_Buffer, write_bytes);
+
+    if(NvmeWrite(current_lba, 1, v2p(DMA_Buffer)))
+    {
+      kfree((char*)DMA_Buffer);
+      return 1;
+    }
+
+    write_size -= write_bytes;
+    current_offset += write_bytes;
+    Data_Buffer += write_bytes;
+  }
+
+  kfree((char*)DMA_Buffer);
+  return 0;
+}
+
 uint32_t fs_read_file(uint32_t FileID, void *Buffer, uint32_t BufferSize, uint32_t Offset)
 {
   if(!FileID || FileID > FS_MAX_FILES || !Buffer || !BufferSize) return 0;
@@ -294,6 +344,9 @@ void fs_create_file_name(const char *Name, uint32_t Capacity, uint8_t Perm, uint
   return;
 }
 
+// The Code Block Below Has Plenty Of Repetitive Logic
+// The Individual Differences Make It A Poor Candidate for Refactoring
+
 DIRECTORY_TREE fs_open(const char *Name)
 {
   DIRECTORY_TREE tree_data = { 0 };
@@ -301,7 +354,7 @@ DIRECTORY_TREE fs_open(const char *Name)
   if(g_SuperBlock.ActiveDirectoriesFileID == 0) return tree_data;
 
   uint8_t Index = g_SuperBlock.ActiveDirectoriesFileID - 1;
-
+  if(!g_FileTable[Index].FileID || !g_FileTable[Index].State) return tree_data;
   if(g_FileTable[Index].UsedBlocks == 0) return tree_data;
 
   uint32_t TotalSize = (g_FileTable[Index].UsedBlocks - 1) * FS_BLOCK_SIZE + g_FileTable[Index].BytesOffset;
@@ -312,7 +365,6 @@ DIRECTORY_TREE fs_open(const char *Name)
   char *buffer = kalloc();
   PDIRECTORY_INFORMATION dir = (PDIRECTORY_INFORMATION)buffer;
 
-
   while(read_size > 0)
   {
     uint32_t read_bytes = (read_size > PGSIZE) ? PGSIZE : read_size;
@@ -321,21 +373,25 @@ DIRECTORY_TREE fs_open(const char *Name)
     
     for(uint32_t i = 0; i < read_bytes / sizeof(DIRECTORY_INFORMATION); i++)
     {
-      uint8_t isMatch = 1;
-      for(uint32_t j = 0; Name[j] != '\0' || dir[i].FileName[j] != '\0'; j++)
+      if(dir[i].FileID != 0 && dir[i].ParentID == CurrentID)
       {
-        if(Name[j] != dir[i].FileName[j])
+        uint8_t isMatch = 1;
+        for(uint32_t j = 0; Name[j] != '\0' || dir[i].FileName[j] != '\0'; j++)
         {
-          isMatch = 0;
-          break;
+          if(Name[j] != dir[i].FileName[j])
+          {
+            isMatch = 0;
+            break;
+          }
         }
-      }
-      if(isMatch && dir[i].ParentID == CurrentID)
-      {
-	tree_data.FileID = dir[i].FileID;
-	tree_data.ParentID = CurrentID;
-	kfree(buffer);
-        return tree_data;
+        if(isMatch)
+        {
+	  tree_data.FileID = dir[i].FileID;
+	  tree_data.ParentID = CurrentID;
+	  tree_data.FileOffset = (TotalSize - read_size) + i * sizeof(DIRECTORY_INFORMATION);
+	  kfree(buffer);
+          return tree_data;
+        }
       }
     }
     read_size -= read_bytes;
@@ -395,7 +451,7 @@ uint32_t GetParentID(uint32_t CurrentID)
   return parent_id;
 }
 
-void list_line(void)
+void list_file(void)
 {
   if (g_SuperBlock.ActiveDirectoriesFileID == 0) return;
   
@@ -432,5 +488,60 @@ void list_line(void)
   }
   puts("\n");
   kfree(buffer);
+  return;
+}
+
+uint8_t IsDirectoryEmpty(uint32_t DirID)
+{
+  if (g_SuperBlock.ActiveDirectoriesFileID == 0) return 1;
+  
+  uint32_t Index = g_SuperBlock.ActiveDirectoriesFileID - 1;
+  if(!g_FileTable[Index].FileID || !g_FileTable[Index].State) return 1;
+
+  if(!g_FileTable[Index].UsedBlocks) return 1;
+
+  uint32_t TotalSize = (g_FileTable[Index].UsedBlocks - 1) * FS_BLOCK_SIZE + g_FileTable[Index].BytesOffset;
+  if(TotalSize < sizeof(DIRECTORY_INFORMATION)) return 1;
+
+  char *buffer = kalloc();
+  PDIRECTORY_INFORMATION dir = (PDIRECTORY_INFORMATION)buffer;
+  uint32_t read_size = TotalSize;
+  uint8_t IsEmpty = 1;
+
+  while(read_size > 0)
+  {
+    uint32_t read_bytes = (read_size > PGSIZE) ? PGSIZE : read_size;
+    uint32_t offset = TotalSize - read_size;
+
+    if(fs_read_file(g_SuperBlock.ActiveDirectoriesFileID, buffer, read_bytes, offset) == 0) break;
+
+    uint32_t entries = read_bytes / sizeof(DIRECTORY_INFORMATION);
+    for(uint32_t i = 0; i < entries; i++)
+    {
+      if(dir[i].FileID != 0 && dir[i].ParentID == DirID)
+      {
+        IsEmpty = 0;
+	break;
+      }
+    }
+    if(!IsEmpty) break;
+    read_size -= read_bytes;
+  }
+
+  kfree(buffer);
+  return IsEmpty;
+}
+
+void fs_init_dir_single_file(uint32_t offset)
+{
+  DIRECTORY_INFORMATION FormatName = { 0 };
+  fs_write_file_offset(g_SuperBlock.ActiveDirectoriesFileID, &FormatName, sizeof(DIRECTORY_INFORMATION), offset);
+  return ;
+}
+
+void fs_invalidate_file_table(uint32_t FileID)
+{
+  g_FileTable[FileID - 1].State = 0;
+  NvmeWrite(FS_FILE_TABLE_START_LBA, FS_FILE_TABLE_SECTORS, v2p(g_FileTable));
   return;
 }

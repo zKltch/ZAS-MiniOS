@@ -8,7 +8,20 @@
 #define ring_buffer_size 0x100
 #define ring_buffer_boundary ring_buffer_size - 1
 #define line_buffer_size ring_buffer_size
+
 #define backspace_key 0x8
+#define escape_key 0x1B
+#define up_key 0x81
+#define down_key 0x82
+#define left_key 0x83
+#define right_key 0x84
+
+extern char path[0x100];
+extern char *path_ptr;
+extern uint8_t path_array[0x100];
+extern uint8_t path_step;
+extern uint32_t CurrentID;
+
 typedef struct {
   volatile uint16_t head;
   volatile uint16_t tail;

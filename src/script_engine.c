@@ -12,14 +12,22 @@ static inline void read_space(const char **s)
   }
 }
 
-static inline void filter_args(char *dst, const char *src, uint32_t *len)
+static inline void filter_args(char *dst, const char *src, uint32_t len)
+{
+  while(src[len] != '\n' && src[len] != '\r' && src[len] != '\0')
+  {
+    dst[len] = src[len];
+    len++;
+  }
+  dst[len] = '\0';
+}
+
+static inline void str_length(const char *src, uint32_t *len)
 {
   while(src[*len] != '\n' && src[*len] != '\r' && src[*len] != '\0')
   {
-    dst[*len] = src[*len];
     (*len)++;
   }
-  dst[*len] = '\0';
 }
 
 void cat_file(const char *FileName)
@@ -29,7 +37,14 @@ void cat_file(const char *FileName)
   char file_name[24];
   uint32_t len = 0;
 
-  filter_args(file_name, FileName, &len);
+  str_length(FileName, &len);
+  if(len > 23)
+  {
+    puts("ERROR : File Name Is Too Long\n");
+    return;
+  }
+
+  filter_args(file_name, FileName, 0);
 
   if(len == 0)
   {
@@ -117,7 +132,14 @@ void echo_write_file(const char *args)
   const char *file_name = redirect + 1;
   read_space(&file_name);
 
-  filter_args(filename, file_name, &file_len);
+  str_length(file_name, &file_len);
+  if(file_len > 23)
+  {
+    puts("ERROR : File Name Is Too Long\n");
+    return;
+  }
+
+  filter_args(filename, file_name, 0);
 
   if(file_len == 0)
   {
@@ -171,7 +193,14 @@ void cmd_script(const char *script_name)
   char file_name[24];
   uint32_t length = 0;
 
-  filter_args(file_name, script_name, &length);
+  str_length(script_name, &length);
+  if(length > 23)
+  {
+    puts("ERROR : File Name Is Too Long\n");
+    return;
+  }
+
+  filter_args(file_name, script_name, 0);
 
   DIRECTORY_TREE dir_tree = fs_open(file_name);
   uint32_t file_id = dir_tree.FileID;
@@ -254,7 +283,14 @@ void create_dir(const char *DirName)
 
   read_space(&DirName);
 
-  filter_args(dirname, DirName, &len);
+  str_length(DirName, &len);
+  if(len > 23)
+  {
+    puts("ERROR : File Name Is Too Long\n");
+    return;
+  }
+
+  filter_args(dirname, DirName, 0);
 
   if(len == 0)
   {
@@ -288,7 +324,14 @@ void change_directory(const char *DirName)
 
   read_space(&DirName);
 
-  filter_args(dirname, DirName, &len);
+  str_length(DirName, &len);
+  if(len > 23)
+  {
+    puts("ERROR : File Name Is Too Long\n");
+    return;
+  }
+
+  filter_args(dirname, DirName, 0);
 
   if(len == 0)
   {
@@ -296,11 +339,13 @@ void change_directory(const char *DirName)
     return;
   }
 
+  //if(memcmp(dirname, ".", len))
   if(dirname[0] == '.' && len == 1)
   {
     return; 
   }
 
+  //if(memcmp(dirname, "..", len))
   if(dirname[0] == '.' && dirname[1] == '.' && len == 2)
   {
     if(CurrentID == 0) return;
@@ -346,6 +391,59 @@ void change_directory(const char *DirName)
 
 void cmd_ls(void)
 {
-  list_line();
+  list_file();
+  return;
+}
+
+void remove_file(const char *TargetName)
+{
+  char Name[24];
+  uint32_t len = 0;
+
+  read_space(&TargetName);
+
+  str_length(TargetName, &len);
+  if(len > 23)
+  {
+    puts("ERROR : File Name Is Too Long\n");
+    return;
+  }
+
+  filter_args(Name, TargetName, 0);
+
+  if(len == 0)
+  {
+    puts("help : rm <file/dir>\n");
+    return;
+  }
+
+  if(Name[0] == '.' && (len == 1 || (len == 2 && Name[1] == '.')))
+  {
+    puts("ERROR : Can't Remove '.' or '..'!\n");
+    return ;
+  }
+
+  DIRECTORY_TREE dir_tree = fs_open(Name);
+  if(!dir_tree.FileID)
+  {
+    puts("No Such File or Directory >> "); puts(Name); puts("\n");
+    return;
+  }
+
+  if(IsDirectory(dir_tree.FileID))
+  {
+    if(!IsDirectoryEmpty(dir_tree.FileID))
+    {
+      puts("ERROR : Directory Not Empty!\n");
+      return;
+    }
+  }
+
+  fs_init_dir_single_file(dir_tree.FileOffset);
+
+  fs_invalidate_file_table(dir_tree.FileID);
+
+  puts("Removed ["); puts(Name); puts("] Successfully\n");
+
   return;
 }

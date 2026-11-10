@@ -30,4 +30,6 @@ void change_directory(const char *DirName);
 
 void cmd_ls(void);
 
+void remove_file(const char *TargetName);
+
 #endif

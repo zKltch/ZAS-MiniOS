@@ -1,13 +1,16 @@
 #include "puts.h"
 #include <stdint.h>
 
-char path[0x100] = { 0 };
-char *path_ptr = path;
-uint8_t path_array[0x100] = { 0 };
-uint8_t path_step = 0;
-uint32_t CurrentID = 0; // it should be saved in task
-static uint16_t StringAddress = 0;
+uint16_t StringAddress = 0;
+// static uint16_t StringAddress = 0;
 
+static inline void outb(uint16_t port, uint8_t val) {
+  __asm__ volatile("outb %0, %1" : : "a"(val), "Nd"(port));
+}
+
+// This code is specifically designed to work around a broken compiler
+// The compiler bug has been fixed in the new toolchain
+/*
 void putc(uint8_t c, uint8_t color) {
   volatile uint8_t *vga_ptr = (uint8_t *)VGA_ADDRESS;
   volatile uint16_t *StringAddressPtr = &StringAddress;
@@ -25,14 +28,70 @@ void putc(uint8_t c, uint8_t color) {
 
 void backspace() {
 
-  volatile uint8_t *vga_ptr = (uint8_t *)VGA_ADDRESS;
-  volatile uint16_t *StringAddressPtr = &StringAddress;
+volatile uint8_t *vga_ptr = (uint8_t *)VGA_ADDRESS;
+volatile uint16_t *StringAddressPtr = &StringAddress;
 
-  vga_ptr = vga_ptr + *StringAddressPtr;
-  *vga_ptr = ' ';
-  vga_ptr++;
-  *vga_ptr = 0x07;
-  *StringAddressPtr = *StringAddressPtr - 2;
+vga_ptr = vga_ptr + *StringAddressPtr;
+*vga_ptr = ' ';
+vga_ptr++;
+*vga_ptr = 0x07;
+*StringAddressPtr = *StringAddressPtr - 2;
+}
+*/
+
+void update_cursor(short Move)
+{
+  StringAddress += (Move << 1);
+  if (StringAddress < 0) StringAddress = 0;
+  if (StringAddress + (VGA_WIDTH * 2) >= VGA_ADDRESS_SIZE)
+  {
+    volatile uint8_t *vga_ptr = (uint8_t *)VGA_ADDRESS;
+    uint16_t vga_page_start = StringAddress - (VGA_HEIGHT - 1) * (VGA_WIDTH * 2);
+    for(uint16_t i = 0; i < VGA_PAGE_SIZE; i++) vga_ptr[vga_page_start + i];
+    StringAddress = (VGA_HEIGHT - 1) * (VGA_WIDTH * 2);
+  }
+
+  uint16_t current_line = StringAddress / (VGA_WIDTH * 2);
+  WORD_INTEGER vga_start_offset;
+  vga_start_offset.WordPart = 0;
+  if (current_line >= VGA_HEIGHT) vga_start_offset.WordPart = (current_line - (VGA_HEIGHT - 1)) * VGA_WIDTH;
+
+  outb(VGA_CTRL_PORT, 0xD); // LOW
+  outb(VGA_DATA_PORT, vga_start_offset.LowPart);
+
+  outb(VGA_CTRL_PORT, 0xC); // HIGH
+  outb(VGA_DATA_PORT, vga_start_offset.HighPart);
+
+  WORD_INTEGER Cursor;
+  Cursor.WordPart = StringAddress >> 1;
+
+  outb(VGA_CTRL_PORT, 0xF); // LOW
+  outb(VGA_DATA_PORT, Cursor.LowPart);
+
+  outb(VGA_CTRL_PORT, 0xE); // HIGH
+  outb(VGA_DATA_PORT, Cursor.HighPart);
+}
+
+void putc(uint8_t c, uint8_t color) {
+  volatile uint8_t *vga_ptr = (uint8_t *)VGA_ADDRESS;
+  if (c == '\n') {
+    StringAddress = (StringAddress / (VGA_WIDTH << 1) + 1) * (VGA_WIDTH << 1);
+  } else {
+    vga_ptr[StringAddress] = c;
+    vga_ptr[StringAddress + 1] = color;
+    StringAddress = StringAddress + 2;
+  }
+  update_cursor(0);
+}
+
+void backspace() {
+  volatile uint8_t *vga_ptr = (uint8_t *)VGA_ADDRESS;
+
+  StringAddress -= 2;
+  vga_ptr[StringAddress] = ' ';
+  vga_ptr[StringAddress + 1] = 0x07;
+
+  update_cursor(0);
 }
 
 void puts(const char *s) {
@@ -58,8 +117,8 @@ void puts_hex(uint64_t value) {
 
   while (value != 0) {
     ptr--;
-    *ptr = hex[value % 16];
-    value /= 16;
+    *ptr = hex[value & 0xf];
+    value >>= 4;
   }
 
   while (*ptr != 0) {
@@ -71,10 +130,20 @@ void puts_hex(uint64_t value) {
 void clear(void) {
   uint8_t *vga_begin = (uint8_t *)VGA_ADDRESS;
 
-  for (; vga_begin <= (uint8_t *)VGA_ADDRESS_END; vga_begin++)
-    *vga_begin = (uint8_t)0;
+  for (; vga_begin <= (uint8_t *)VGA_ADDRESS_END; vga_begin += 2)
+  {
+    vga_begin[0] = ' ';
+    vga_begin[1] = 0x07;
+  }
 
   StringAddress = 0;
+
+  update_cursor(0);
+}
+
+void scroll(void)
+{
+
 }
 
 void memset(void *dest, uint8_t content, unsigned long size) {
