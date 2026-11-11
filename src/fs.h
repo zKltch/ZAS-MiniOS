@@ -25,11 +25,14 @@
 #define FS_FILE_TABLE_START_LBA 1
 #define FS_FILE_TABLE_SECTORS 8ULL
 #define FS_MAX_FILES ((FS_FILE_TABLE_SECTORS) * FS_BLOCK_SIZE) / sizeof(FILE_STATUS)
-#define FS_MAX_DIRS
+// #define FS_MAX_DIRS FS_MAX_FILES
 #define FS_DATA_START_LBA (FS_FILE_TABLE_START_LBA + FS_FILE_TABLE_SECTORS)
 
 #define CREATE_DIR_RESERVE_SIZE 1
 #define CREATE_FILE_RESERVE_SIZE 5
+
+#define FILE_NAME_SIZE_LIMIT 24
+#define FILE_NAME_LENGTH_LIMIT (FILE_NAME_SIZE_LIMIT - 1)
 
 #define DIV_ROUND_UP(Data, Size) (((Data) + ((Size) - 1)) / (Size))
 
@@ -60,10 +63,9 @@ typedef struct _FILE_STATUS
   uint32_t Reserved2;
 } FILE_STATUS, *PFILE_STATUS;
 
-// Only support Max Length 23
 typedef struct _DIRECTORY_INFORMATION
 {
-  char FileName[24];
+  char FileName[FILE_NAME_SIZE_LIMIT];
   uint32_t FileID;
   uint32_t ParentID;
 } DIRECTORY_INFORMATION, *PDIRECTORY_INFORMATION;

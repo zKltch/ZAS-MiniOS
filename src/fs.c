@@ -2,6 +2,7 @@
 #include "kalloc.h"
 #include "vmm.h"
 #include "nvme.h"
+#include "console.h"
 #include "puts.h"
 
 static SUPER_BLOCK g_SuperBlock;

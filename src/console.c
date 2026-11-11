@@ -7,7 +7,6 @@ volatile ring_buffer_t ring_buffer = {0, 0, {}};
 
 static uint16_t start_cursor = 0;
 // static int offset_cursor = 0;
-static uint16_t cursor_index = 0;
 
 char path[0x100] = { 0 };
 char *path_ptr = path;
@@ -16,7 +15,7 @@ uint8_t path_step = 0;
 uint32_t CurrentID = 0; // it should be saved in task
 
 // called after inserting or deleting char
-static void buffer_refreshline(volatile line_buffer_t *line_buffer)
+static void buffer_refreshline(volatile line_buffer_t *line_buffer, uint16_t cursor_index)
 {
   volatile uint8_t *vga_ptr = (uint8_t *)VGA_ADDRESS;
 
@@ -35,7 +34,7 @@ static void buffer_refreshline(volatile line_buffer_t *line_buffer)
   update_cursor(0);
 }
 
-static void buffer_shl(volatile line_buffer_t *line_buffer)
+static void buffer_shl(volatile line_buffer_t *line_buffer, uint16_t cursor_index)
 {
   for(uint16_t i = cursor_index - 1; i < line_buffer->len - 1; i++)
   {
@@ -43,7 +42,7 @@ static void buffer_shl(volatile line_buffer_t *line_buffer)
   }
 }
 
-static void buffer_shr(volatile line_buffer_t *line_buffer)
+static void buffer_shr(volatile line_buffer_t *line_buffer, uint16_t cursor_index)
 {
   for(uint16_t i = line_buffer->len; i > cursor_index; i--)
   {
@@ -64,6 +63,7 @@ uint8_t buffer_getc(void) {
 
 void buffer_readline(char *dst) {
   uint8_t c = 0;
+  uint16_t cursor_index = 0;
 
   volatile line_buffer_t line_buffer = {0, {}};
   memset((void *)line_buffer.buffer, '\0', line_buffer_size);
@@ -76,11 +76,11 @@ void buffer_readline(char *dst) {
     {
       case backspace_key :
         if (cursor_index == 0) continue;
-        buffer_shl(&line_buffer);
+        buffer_shl(&line_buffer, cursor_index);
         cursor_index--;
         // backspace();
         line_buffer.buffer[--line_buffer.len] = '\0';
-        buffer_refreshline(&line_buffer);
+        buffer_refreshline(&line_buffer, cursor_index);
 	continue;
       case escape_key :
       case up_key :
@@ -103,11 +103,11 @@ void buffer_readline(char *dst) {
     }
 
     if (c) {
-      if (cursor_index != line_buffer.len) buffer_shr(&line_buffer);
+      if (cursor_index != line_buffer.len) buffer_shr(&line_buffer, cursor_index);
       line_buffer.buffer[cursor_index++] = c;
       line_buffer.len++;
       if (cursor_index == line_buffer.len) putc(c, 0xf);
-      else buffer_refreshline(&line_buffer);
+      else buffer_refreshline(&line_buffer, cursor_index);
     } else {
       sti();
       hlt();

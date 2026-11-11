@@ -141,11 +141,6 @@ void clear(void) {
   update_cursor(0);
 }
 
-void scroll(void)
-{
-
-}
-
 void memset(void *dest, uint8_t content, unsigned long size) {
   uint8_t *set = (uint8_t *)dest;
 

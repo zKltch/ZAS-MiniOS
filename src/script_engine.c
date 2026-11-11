@@ -34,11 +34,11 @@ void cat_file(const char *FileName)
 {
   read_space(&FileName);
 
-  char file_name[24];
+  char file_name[FILE_NAME_SIZE_LIMIT];
   uint32_t len = 0;
 
   str_length(FileName, &len);
-  if(len > 23)
+  if(len > FILE_NAME_LENGTH_LIMIT)
   {
     puts("ERROR : File Name Is Too Long\n");
     return;
@@ -116,7 +116,7 @@ void echo_write_file(const char *args)
   }
 
   char content[256];
-  char filename[24];
+  char filename[FILE_NAME_SIZE_LIMIT];
   uint32_t file_len = 0;
 
   uint32_t content_len = redirect - args;
@@ -133,7 +133,7 @@ void echo_write_file(const char *args)
   read_space(&file_name);
 
   str_length(file_name, &file_len);
-  if(file_len > 23)
+  if(file_len > FILE_NAME_LENGTH_LIMIT)
   {
     puts("ERROR : File Name Is Too Long\n");
     return;
@@ -190,11 +190,11 @@ void cmd_script(const char *script_name)
     return;
   }
 
-  char file_name[24];
+  char file_name[FILE_NAME_SIZE_LIMIT];
   uint32_t length = 0;
 
   str_length(script_name, &length);
-  if(length > 23)
+  if(length > FILE_NAME_LENGTH_LIMIT)
   {
     puts("ERROR : File Name Is Too Long\n");
     return;
@@ -278,7 +278,7 @@ void cmd_script(const char *script_name)
 
 void create_dir(const char *DirName)
 {
-  char dirname[24];
+  char dirname[FILE_NAME_SIZE_LIMIT];
   uint32_t len = 0;
 
   read_space(&DirName);
@@ -319,13 +319,13 @@ void create_dir(const char *DirName)
 
 void change_directory(const char *DirName)
 {
-  char dirname[24];
+  char dirname[FILE_NAME_SIZE_LIMIT];
   uint32_t len = 0;
 
   read_space(&DirName);
 
   str_length(DirName, &len);
-  if(len > 23)
+  if(len > FILE_NAME_LENGTH_LIMIT)
   {
     puts("ERROR : File Name Is Too Long\n");
     return;
@@ -397,13 +397,13 @@ void cmd_ls(void)
 
 void remove_file(const char *TargetName)
 {
-  char Name[24];
+  char Name[FILE_NAME_SIZE_LIMIT];
   uint32_t len = 0;
 
   read_space(&TargetName);
 
   str_length(TargetName, &len);
-  if(len > 23)
+  if(len > FILE_NAME_LENGTH_LIMIT)
   {
     puts("ERROR : File Name Is Too Long\n");
     return;

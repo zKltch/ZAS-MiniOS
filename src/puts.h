@@ -31,7 +31,6 @@ void puts(const char *s);
 void puts_hex(uint64_t value);
 void clear(void);
 void backspace(void);
-void scroll(void);
 void memset(void *dest, uint8_t content, unsigned long size);
 void memcpy(void *dest, void *src, unsigned long size);
 int memcmp(void *dest, void *src, unsigned long size);
