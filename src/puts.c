@@ -84,6 +84,7 @@ void putc(uint8_t c, uint8_t color) {
   update_cursor(0);
 }
 
+// [[deprecated]]
 void backspace() {
   volatile uint8_t *vga_ptr = (uint8_t *)VGA_ADDRESS;
 

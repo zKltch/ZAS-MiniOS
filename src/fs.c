@@ -93,7 +93,7 @@ uint8_t fs_write_file(uint32_t FileID, const void *Buffer, uint32_t Size)
 
   uint32_t needed_blocks = DIV_ROUND_UP(TotalSize, FS_BLOCK_SIZE);
   if(g_FileTable[Index].DesiredCapacity < needed_blocks) return 1;
-  // return the pointer of fs_remapped(capacity) 
+  // return the pointer of fs_remapped(capacity)
 
   void *DMA_Buffer = kalloc();
   char *Data_Buffer = (char*)Buffer;
@@ -337,7 +337,7 @@ void fs_create_file_name(const char *Name, uint32_t Capacity, uint8_t Perm, uint
   DIRECTORY_INFORMATION Entry = { 0 };
   Entry.ParentID = CurrentID;
   Entry.FileID = FileID;
-  for(uint32_t i = 0; i < 23 && Name[i] != '\0'; i++) Entry.FileName[i] = Name[i];
+  for(uint32_t i = 0; i < FILE_NAME_LENGTH_LIMIT && Name[i] != '\0'; i++) Entry.FileName[i] = Name[i];
 
   //Type ? fs_write_file(g_SuperBlock.ActiveDirectoriesDirID, &Entry, sizeof(DIRECTORY_INFORMATION)) :
     fs_write_file(g_SuperBlock.ActiveDirectoriesFileID, &Entry, sizeof(DIRECTORY_INFORMATION));
@@ -390,6 +390,8 @@ DIRECTORY_TREE fs_open(const char *Name)
 	  tree_data.FileID = dir[i].FileID;
 	  tree_data.ParentID = CurrentID;
 	  tree_data.FileOffset = (TotalSize - read_size) + i * sizeof(DIRECTORY_INFORMATION);
+	  tree_data.UsedBlocks = g_FileTable[tree_data.FileID - 1].UsedBlocks;
+	  tree_data.BytesOffset = g_FileTable[tree_data.FileID - 1].BytesOffset;
 	  kfree(buffer);
           return tree_data;
         }
@@ -545,4 +547,9 @@ void fs_invalidate_file_table(uint32_t FileID)
   g_FileTable[FileID - 1].State = 0;
   NvmeWrite(FS_FILE_TABLE_START_LBA, FS_FILE_TABLE_SECTORS, v2p(g_FileTable));
   return;
+}
+
+PFILE_STATUS fs_get_file(uint32_t FileID)
+{
+  return &g_FileTable[FileID - 1];
 }

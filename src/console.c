@@ -106,7 +106,7 @@ void buffer_readline(char *dst) {
       if (cursor_index != line_buffer.len) buffer_shr(&line_buffer, cursor_index);
       line_buffer.buffer[cursor_index++] = c;
       line_buffer.len++;
-      if (cursor_index == line_buffer.len) putc(c, 0xf);
+      if (cursor_index == line_buffer.len) putc(c, 0xf); // To Handle \n
       else buffer_refreshline(&line_buffer, cursor_index);
     } else {
       sti();
@@ -140,4 +140,5 @@ void execute_command(char *cmd)
   if (!memcmp(cmd, "cd", 2)) change_directory(cmd + 2);
   if (!memcmp(cmd, "ls", 2)) cmd_ls();
   if (!memcmp(cmd, "rm", 2)) remove_file(cmd + 2);
+  if (!memcmp(cmd, "vim", 3)) edit_file(cmd + 3);
 }

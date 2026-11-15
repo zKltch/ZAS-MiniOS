@@ -2,6 +2,7 @@
 #include "kalloc.h"
 #include "fs.h"
 #include "console.h"
+#include "editor.h"
 #include "puts.h"
 
 static inline void read_space(const char **s)
@@ -151,7 +152,7 @@ void echo_write_file(const char *args)
   uint32_t file_id = dir_tree.FileID;
   if(!file_id)
   {
-    fs_create_file_name(filename, CREATE_FILE_RESERVE_SIZE, PERM(7, 7), 0);
+    fs_create_file_name(filename, CREATE_FILE_RESERVE_SIZE, PERM(7, 7), FILE);
     dir_tree = fs_open(filename);
     file_id = dir_tree.FileID;
     if(!file_id)
@@ -160,7 +161,6 @@ void echo_write_file(const char *args)
       return;
     }
   }
-
   char IsDir = IsDirectory(file_id);
   switch (IsDir)
   {
@@ -445,5 +445,103 @@ void remove_file(const char *TargetName)
 
   puts("Removed ["); puts(Name); puts("] Successfully\n");
 
+  return;
+}
+
+void edit_file(const char *FileName)
+{
+  char Name[FILE_NAME_SIZE_LIMIT];
+  uint32_t len = 0;
+
+  read_space(&FileName);
+
+  str_length(FileName, &len);
+  if(len > FILE_NAME_LENGTH_LIMIT)
+  {
+    puts("ERROR : File Name Is Too Long\n");
+    return;
+  }
+
+  filter_args(Name, FileName, 0);
+
+  if(len == 0)
+  {
+    puts("help : vim <file>\n");
+    return;
+  }
+
+  if(Name[0] == '.' && (len == 1 || (len == 2 && Name[1] == '.')))
+  {
+    puts("ERROR : Can't Edit '.' or '..'!\n");
+    return ;
+  }
+
+  DIRECTORY_TREE dir_tree = fs_open(Name);
+  if(!dir_tree.FileID)
+  {
+    fs_create_file_name(Name, CREATE_FILE_RESERVE_SIZE, PERM(7, 7), FILE);
+    dir_tree = fs_open(Name);
+    if(!dir_tree.FileID)
+    {
+      puts("ERROR : Failed To Create File ["); puts(Name); puts("]\n");
+      return;
+    }
+  }
+
+  if(IsDirectory(dir_tree.FileID))
+  {
+    puts("ERROR : Can't Edit Directory!\n");
+    return;
+  }
+
+  /*
+  PBUFFER_STREAM page_buffer = (PBUFFER_STREAM)kalloc();
+  memset(page_buffer, 0, PGSIZE);
+  page_buffer->Start = page_buffer;
+  page_buffer->Last = page_buffer;
+  page_buffer->Next = 0;
+  page_buffer->Previous = 0;
+  page_buffer->Length = 0;
+
+  PBUFFER_STREAM current_buffer = page_buffer;
+  */
+
+  PBUFFER_STREAM text_buffer = (PBUFFER_STREAM)kalloc();
+  memset(text_buffer, 0, PGSIZE);
+
+  uint32_t TotalSize = dir_tree.UsedBlocks ? (dir_tree.UsedBlocks - 1) * FS_BLOCK_SIZE + dir_tree.BytesOffset : 0;
+  uint32_t offset = 0;
+
+  text_buffer->Length = TotalSize;
+
+  fs_read_file(dir_tree.FileID, text_buffer->Data, TotalSize, offset);
+
+  /*
+  while(offset < TotalSize)
+  {
+    uint32_t read_bytes = (TotalSize - offset > sizeof(current_buffer->Data)) ? sizeof(current_buffer->Data) : TotalSize - offset;
+    if(fs_read_file(dir_tree.FileID, current_buffer->Data, read_bytes, offset) == 0) break;
+
+    current_buffer->Length = read_bytes;
+    offset += read_bytes;
+    if (offset < TotalSize)
+    {
+      current_buffer->Next = (PBUFFER_STREAM)kalloc();
+      memset(current_buffer->Next, 0, PGSIZE);
+
+      current_buffer->Start = page_buffer;
+      current_buffer->Next->Previous = current_buffer;
+      current_buffer->Next->Next = 0;
+      current_buffer->Next->Length = 0;
+
+      current_buffer = current_buffer->Next;
+      page_buffer->Last = current_buffer;
+    }
+  }
+
+  EditorEngine(page_buffer);
+  */
+  clear(); 
+  EditorEngine(text_buffer, Name);
   return;
 }

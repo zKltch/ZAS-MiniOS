@@ -75,6 +75,8 @@ typedef struct _DIRECTORY_TREE
   uint32_t FileID;
   uint32_t ParentID;
   uint32_t FileOffset;
+  uint32_t UsedBlocks;
+  uint32_t BytesOffset;
 } DIRECTORY_TREE, *PDIRECTORY_TREE;
 #pragma pack(pop)
 
@@ -164,5 +166,7 @@ uint8_t IsDirectoryEmpty(uint32_t DirID);
 void fs_init_dir_single_file(uint32_t offset);
 
 void fs_invalidate_file_table(uint32_t FileID);
+
+PFILE_STATUS fs_get_file(uint32_t FileID);
 
 #endif

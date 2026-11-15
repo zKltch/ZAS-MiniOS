@@ -32,4 +32,5 @@ void cmd_ls(void);
 
 void remove_file(const char *TargetName);
 
+void edit_file(const char *FileName);
 #endif
