@@ -1,15 +1,15 @@
 #include "console.h"
+#include "fs.h"
 #include "idt.h"
 #include "kalloc.h"
 #include "kpanic.h"
+#include "nvme.h"
 #include "pic.h"
 #include "pit.h"
 #include "puts.h"
 #include "schedule.h"
 #include "task_handler.h"
 #include "vmm.h"
-#include "nvme.h"
-#include "fs.h"
 #include <stdint.h>
 
 extern char rodata_end[];
@@ -27,20 +27,22 @@ void kmain(void *multiboot_info) {
   kvminit();
   init_idt();
   PIC_remap(PIC1_OFFSET, PIC2_OFFSET);
+
   IRQ_clear_mask(0);
   pit_init(100);
 
-  PCI_DEVICE device = { 0 };
+  PCI_DEVICE device = {0};
   PciScanNvme(&device);
   NvmeInit(device.BAR0);
-  //NvmeIdentifyTest();
+  // NvmeIdentifyTest();
   NvmeInitIoQueues();
-  //NvmeReadWriteTest();
+  // NvmeReadWriteTest();
 
   fs_mount();
 
   sti();
 
+  __asm__ volatile("int $0x80" ::"a"(5) : "memory");
   // fs_test();
 
   // puts("meow\n");
